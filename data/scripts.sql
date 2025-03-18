@@ -11,6 +11,14 @@ WITH (FORMAT csv, HEADER true);
 
 -- select * from brands;
 
+-- select
+-- id,
+-- count(*) as dups
+-- from brands
+-- group by 1
+-- having count(*) > 1
+
+
 -------------------------------------
 -- DROP TABLE if exists places;
 
@@ -26,6 +34,20 @@ FROM '/Users/fedeotero/dev/passby/passby-test/data/places.csv'
 WITH (FORMAT csv, HEADER true);
 
 -- select * from places;
+
+-- select
+-- id,
+-- count(*) as dups
+-- from places
+-- group by 1
+-- having count(*) > 1
+
+-- select 
+-- pl.id
+-- from places pl
+-- left join brands br on
+-- pl.brand_id = br.id
+-- where br.id is null
 
 -------------------------------------
 -- DROP TABLE if exists visits;
@@ -49,6 +71,20 @@ SET visits = string_to_array(trim(both '[]' from visits_arr), ',')::INTEGER[];
 ALTER TABLE visits DROP COLUMN visits_arr;
 
 -- select * from visits;
+-- select
+-- visit_date,
+-- place_id,
+-- count(*) as dups
+-- from visits
+-- group by 1,2
+-- having count(*) > 1
+
+-- select
+-- vi.place_id
+-- from visits vi
+-- left join places pl on
+-- vi.place_id = pl.id
+-- where pl.id is null;
 
 ---------------------------------------
 -- Task 1
@@ -65,28 +101,44 @@ WITH ORDINALITY as visit(visit,visit_day_of_month);
 
 -- select * from visits_daily
 
+-- select
+-- visit_date,
+-- place_id,
+-- count(*)
+-- from visits_daily
+-- group by 1,2
+-- order by 1;
+
+-- select
+-- visit_date,
+-- place_id,
+-- visit_day_of_month,
+-- count(*) as dups
+-- from visits_daily
+-- group by 1,2,3
+-- having count(*) > 1
+
 -- Create a table of monthly visits per point of interest (POI)
 -- drop table if exists visits_monthly_by_poi;
 CREATE TABLE visits_monthly_by_poi AS
 select
 place_id,
 visit_date as year_month,
-sum(visit) as monthly_visits
+sum(visits) as monthly_visits
 from visits_daily
 group by 1,2;
 
 -- select * from visits_monthly_by_poi
 
+-- select
+-- place_id,
+-- year_month,
+-- count(*) as dups
+-- from visits_monthly_by_poi
+-- group by 1,2
+-- having count(*) > 1
+
 -- Create a table of weekly visits per brand
-
--- previous check: see if each place has one or more than one brand in 'places'
-select
-count(distinct(id)) as places,
-count(*) as _rows
-from places
-
--- conclusion: each row corresponds to one POI (there are no two rows with the same POI) and
--- each POI corresponds to only one brand
 
 -- drop table if exists visits_weekly_by_brand;
 CREATE TABLE visits_weekly_by_brand AS
@@ -98,7 +150,7 @@ visits_weekly_by_brand as
 	visit_date as year_month,
 	visit_day_of_month,
 	(DIV(visit_day_of_month-1,7)+1) as week,
-	visit
+	visits
 	from visits_daily vd
 	inner join places pl on
 	vd.place_id = pl.id
@@ -107,9 +159,18 @@ select
 brand_id,
 year_month,
 week,
-sum(visit) as weekly_visits
+sum(visits) as weekly_visits
 from visits_weekly_by_brand
 group by 1,2,3;
+
+-- select
+-- brand_id,
+-- year_month,
+-- week,
+-- count(*) as dups
+-- from visits_weekly_by_brand
+-- group by 1,2,3
+-- having count(*) > 1
 
 -- select * from visits_weekly_by_brand
 ---------------------------------------
@@ -153,6 +214,14 @@ from visits_monthly_by_brand_comparison;
 
 -- select * from visits_monthly_evolution_by_brand;
 
+-- select
+-- brand_id,
+-- year_month,
+-- count(*) as dups
+-- from visits_monthly_evolution_by_brand
+-- group by 1,2
+-- having count(*) > 1
+
 ---------------------------------------
 -- Task 3: Data Update Scenario
 -- Create a copy of the visits table that correctly shows 0 visits to Sansom POIs on Sundays.
@@ -179,3 +248,12 @@ WHERE place_id in (
 -- 	select id as place_id from places
 -- 	where brand_id = (select id from brands where name = 'Sansom')
 -- );
+
+-- select
+-- visit_date,
+-- place_id,
+-- count(*) as dups
+-- from visits_copy
+-- group by 1,2
+-- having count(*) > 1
+
